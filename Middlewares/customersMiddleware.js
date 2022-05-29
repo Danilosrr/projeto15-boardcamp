@@ -36,3 +36,15 @@ export async function customerCpfConflict(req, res, next){
         next();
     };
 };
+
+export async function updateCustomerCpf(req, res, next){
+    const customer = res.locals.body;
+
+    const cpfConflict = await db.query(`SELECT * FROM customers WHERE cpf = '${customer.cpf}'`);
+
+    if(cpfConflict.rowCount === 0){
+        return res.status(404).send('cpf not registered');
+    }else{
+        next();
+    };
+};
