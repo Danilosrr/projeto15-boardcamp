@@ -10,4 +10,32 @@ export async function addGame(req, res){
         console.log(error);
         return res.sendStatus(422);
     };
+};
+
+export async function listGames(req, res) {
+    const name = req.query.name;
+
+    try {
+        if(name){
+            const promise = await db.query(`
+            SELECT games.*, categories.name as "categoryName"
+            FROM games
+            JOIN categories
+            ON games."categoryId" = categories.id
+            WHERE LOWER(games.name) LIKE '${name.toLowerCase()}%'
+            `); 
+            res.status(200).send(promise.rows);
+        }else{
+            const promise = await db.query(`
+            SELECT games.*, categories.name as "categoryName"
+            FROM games
+            JOIN categories
+            ON games."categoryId" = categories.id
+            `);
+            res.status(200).send(promise.rows);
+        };
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(501);
+    };
 }
