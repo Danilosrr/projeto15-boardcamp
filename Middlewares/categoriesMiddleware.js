@@ -2,7 +2,7 @@ import joi from "joi";
 import db from "../database.js";
 
 export function categoriesSchema(req, res, next){
-    const category = req.body
+    const category = req.body;
 
     const categorySchema = joi.object({
         name: joi.string().required(),
