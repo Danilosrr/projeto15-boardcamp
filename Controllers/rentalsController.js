@@ -1,4 +1,5 @@
 import db from "../database.js";
+import { createResponse } from "../utils/functions.js";
 
 export async function addRental(req, res) {
     const {customerId,gameId,todayDate,daysRented,originalPrice} = res.locals.body;
@@ -53,29 +54,20 @@ export async function listRentals(req, res){
         console.log(error);
         return res.sendStatus(500);
     };
-}
-
-function createResponse(obj){
-    let response = 
-    {
-        id: obj.id,
-        customerId: obj.customerId,
-        gameId: obj.gameId,
-        rentDate: obj.rentDate,
-        daysRented: obj.daysRented,
-        returnDate: obj.returnDate,
-        originalPrice: obj.originalPrice,
-        delayFee: obj.delayFee,
-        customer: {
-           id: obj.customerId,
-           name: obj.customerName
-        },
-        game: {
-            id: obj.objGameId,
-            name: obj.gameName,
-            categoryId: obj.categoryId,
-            categoryName: obj.categoryName
-        }
-    }
-    return response;
 };
+
+export async function finishRent(req, res){
+    const id = req.params.id;
+    const { todayDate, daysPassed, daysRented, pricePerDay } = res.locals.body;
+
+    const delayFee = (daysPassed - daysRented) >= 0 ? (daysPassed - daysRented)*pricePerDay : 0;
+
+    try {
+        const promise = await db.query(`UPDATE rentals SET ("returnDate", "delayFee") = ($2, $3) WHERE id=$1`,[id, todayDate, delayFee]);
+        return res.sendStatus(200);
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    };
+};
+

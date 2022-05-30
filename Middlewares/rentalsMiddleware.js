@@ -1,5 +1,6 @@
 import joi from "joi";
 import db from "../database.js";
+import { getDayDiff } from "../utils/functions.js";
 
 export function rentalSchema(req, res, next){    
     const rental = req.body;
@@ -54,4 +55,20 @@ export async function alreadyRentedGame(req, res, next){
     const originalPrice = parseInt(rent.daysRented * rent.pricePerDay);
     res.locals.body = {...rent,originalPrice};
     next();
+};
+
+export async function checkDaysPassed(req, res, next){
+    const id = req.params.id;
+
+    try {
+        const todayDate = new Date().toISOString().split('T')[0];
+        const promise = await db.query(`SELECT rentals.*,games."pricePerDay" FROM rentals JOIN games ON "gameId" = games.id WHERE rentals.id=$1`,[id]);
+        const daysPassed = getDayDiff(promise.rows[0].rentDate,todayDate);    
+        
+        res.locals.body = {todayDate, daysPassed, daysRented:promise.rows[0].daysRented, pricePerDay:promise.rows[0].pricePerDay};
+        next();
+    } catch (error) {
+        console.log(error);
+        return res.sendStatus(500);
+    };   
 };
