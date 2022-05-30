@@ -60,15 +60,31 @@ export async function alreadyRentedGame(req, res, next){
 export async function checkDaysPassed(req, res, next){
     const id = req.params.id;
 
-    try {
+    const checkId = await db.query(`SELECT * FROM rentals WHERE id=$1`,[id])
+    if(checkId.rowCount === 0){
+        return res.sendStatus(404);
+    };
+
+    try {        
+        const promise = await db.query(`
+            SELECT rentals.*,games."pricePerDay" 
+            FROM rentals 
+            JOIN games ON "gameId" = games.id 
+            WHERE rentals.id=$1 
+            AND rentals."returnDate" IS NULL 
+        `,[id]);
+
+        if(promise.rowCount === 0){
+            return res.status(400).send('No open rent found'); 
+        };
+
         const todayDate = new Date().toISOString().split('T')[0];
-        const promise = await db.query(`SELECT rentals.*,games."pricePerDay" FROM rentals JOIN games ON "gameId" = games.id WHERE rentals.id=$1`,[id]);
         const daysPassed = getDayDiff(promise.rows[0].rentDate,todayDate);    
         
         res.locals.body = {todayDate, daysPassed, daysRented:promise.rows[0].daysRented, pricePerDay:promise.rows[0].pricePerDay};
         next();
     } catch (error) {
         console.log(error);
-        return res.sendStatus(500);
+        return res.sendStatus(400);
     };   
 };

@@ -71,3 +71,16 @@ export async function finishRent(req, res){
     };
 };
 
+export async function deleteRent(req, res){
+    const id = req.params.id;
+
+    const checkRent = await db.query(`SELECT * FROM rentals WHERE id=$1`,[id])
+    if(checkRent.rowCount === 0){
+        return res.sendStatus(404);
+    }else if(checkRent.rows[0].returnDate){
+        return res.sendStatus(400);
+    }else{
+        await db.query(`DELETE FROM rentals WHERE id=$1`,[id])
+        return res.sendStatus(200);
+    };
+}
